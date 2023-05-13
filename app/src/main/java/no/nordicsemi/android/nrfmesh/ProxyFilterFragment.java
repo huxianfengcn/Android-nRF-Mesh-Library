@@ -272,7 +272,7 @@ public class ProxyFilterFragment extends Fragment implements
             mViewModel.getMeshManagerApi().createMeshPdu(MeshAddress.UNASSIGNED_ADDRESS, meshMessage);
         } catch (IllegalArgumentException ex) {
             final DialogFragmentError message = DialogFragmentError.
-                    newInstance(getString(R.string.title_error), ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage());
+                    newInstance(getString(R.string.title_error), ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage());
             message.show(getChildFragmentManager(), null);
         }
     }

@@ -88,6 +88,12 @@ public class ProvisioningPublicKeyState extends ProvisioningState {
     public void executeSend() {
         generateKeyPairs();
         final byte[] pdu = generatePublicKeyXYPDU();
+        // added by huxf, start 之后应延时 send public key， 避免设备侧队列溢出
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         provisioningStatusCallbacks.onProvisioningStateChanged(node, States.PROVISIONING_PUBLIC_KEY_SENT, pdu);
         internalTransportCallbacks.sendProvisioningPdu(node, pdu);
     }

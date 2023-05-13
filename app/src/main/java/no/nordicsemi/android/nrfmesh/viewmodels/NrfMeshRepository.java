@@ -1,13 +1,34 @@
 package no.nordicsemi.android.nrfmesh.viewmodels;
 
+import static no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes.GENERIC_LEVEL_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes.GENERIC_ON_OFF_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes.SCENE_REGISTER_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes.SCENE_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_APPKEY_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_GATT_PROXY_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_HEARTBEAT_PUBLICATION_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_HEARTBEAT_SUBSCRIPTION_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS;
+import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_RELAY_STATUS;
+import static no.nordicsemi.android.nrfmesh.ble.BleMeshManager.MESH_PROXY_UUID;
+
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -17,11 +38,7 @@ import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import no.nordicsemi.android.log.LogSession;
-import no.nordicsemi.android.log.Logger;
+import no.nordicsemi.android.ble.observer.ConnectionObserver;
 import no.nordicsemi.android.mesh.ApplicationKey;
 import no.nordicsemi.android.mesh.Group;
 import no.nordicsemi.android.mesh.MeshManagerApi;
@@ -62,9 +79,10 @@ import no.nordicsemi.android.mesh.transport.SceneRegisterStatus;
 import no.nordicsemi.android.mesh.transport.SceneStatus;
 import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus;
 import no.nordicsemi.android.mesh.utils.MeshAddress;
+import no.nordicsemi.android.nrfmesh.R;
 import no.nordicsemi.android.nrfmesh.adapter.ExtendedBluetoothDevice;
 import no.nordicsemi.android.nrfmesh.ble.BleMeshManager;
-import no.nordicsemi.android.nrfmesh.ble.BleMeshManagerCallbacks;
+import no.nordicsemi.android.nrfmesh.ble.MeshDataObserver;
 import no.nordicsemi.android.nrfmesh.utils.ProvisionerStates;
 import no.nordicsemi.android.nrfmesh.utils.Utils;
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat;
@@ -74,32 +92,13 @@ import no.nordicsemi.android.support.v18.scanner.ScanRecord;
 import no.nordicsemi.android.support.v18.scanner.ScanResult;
 import no.nordicsemi.android.support.v18.scanner.ScanSettings;
 
-import static no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes.GENERIC_LEVEL_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes.GENERIC_ON_OFF_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes.SCENE_REGISTER_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes.SCENE_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_APPKEY_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_GATT_PROXY_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_HEARTBEAT_PUBLICATION_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_HEARTBEAT_SUBSCRIPTION_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS;
-import static no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_RELAY_STATUS;
-import static no.nordicsemi.android.nrfmesh.ble.BleMeshManager.MESH_PROXY_UUID;
-
 @Singleton
-public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshStatusCallbacks, MeshManagerCallbacks, BleMeshManagerCallbacks {
+public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshStatusCallbacks, MeshManagerCallbacks, MeshDataObserver, ConnectionObserver {
 
     private static final String TAG = NrfMeshRepository.class.getSimpleName();
     private static final int ATTENTION_TIMER = 5;
     static final String EXPORT_PATH = Environment.getExternalStorageDirectory() + File.separator +
             "Nordic Semiconductor" + File.separator + "nRF Mesh" + File.separator;
-    private static final String EXPORTED_PATH = "sdcard" + File.separator + "Nordic Semiconductor" + File.separator + "nRF Mesh" + File.separator;
 
     // Connection States Connecting, Connected, Disconnecting, Disconnected etc.
     private final MutableLiveData<Boolean> mIsConnectedToProxy = new MutableLiveData<>();
@@ -129,20 +128,12 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
 
     // Holds the selected mesh model to configure
     private final MutableLiveData<MeshModel> mSelectedModel = new MutableLiveData<>();
-    // Holds the selected app key to configure
-    private final MutableLiveData<NetworkKey> mSelectedNetKey = new MutableLiveData<>();
-    // Holds the selected app key to configure
-    private final MutableLiveData<ApplicationKey> mSelectedAppKey = new MutableLiveData<>();
+
     // Holds the selected provisioner when adding/editing
     private final MutableLiveData<Provisioner> mSelectedProvisioner = new MutableLiveData<>();
 
     private final MutableLiveData<Group> mSelectedGroupLiveData = new MutableLiveData<>();
 
-    // Composition data status
-    final SingleLiveEvent<ConfigCompositionDataStatus> mCompositionDataStatus = new SingleLiveEvent<>();
-
-    // App key add status
-    final SingleLiveEvent<ConfigAppKeyStatus> mAppKeyStatus = new SingleLiveEvent<>();
 
     //Contains the MeshNetwork
     private final MeshNetworkLiveData mMeshNetworkLiveData = new MeshNetworkLiveData();
@@ -157,24 +148,26 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
     private final MutableLiveData<TransactionStatus> mTransactionStatus = new SingleLiveEvent<>();
 
     private final MeshManagerApi mMeshManagerApi;
-    private BleMeshManager mBleMeshManager;
+    private final BleMeshManager mBleMeshManager;
     private final Handler mHandler;
     private UnprovisionedMeshNode mUnprovisionedMeshNode;
     private ProvisionedMeshNode mProvisionedMeshNode;
     private boolean mIsReconnectingFlag;
     private boolean mIsScanning;
     private boolean mSetupProvisionedNode;
+    private boolean mIsFFanInitializing = false;
     private ProvisioningStatusLiveData mProvisioningStateLiveData;
     private MeshNetwork mMeshNetwork;
     private boolean mIsCompositionDataReceived;
     private boolean mIsDefaultTtlReceived;
     private boolean mIsAppKeyAddCompleted;
     private boolean mIsNetworkRetransmitSetCompleted;
-    private Uri uri;
+
 
     private final Runnable mReconnectRunnable = this::startScan;
 
     private final Runnable mScannerTimeout = () -> {
+        Log.d(TAG, "Timeout, Scan stopped!");
         stopScan();
         mIsReconnecting.postValue(false);
     };
@@ -190,13 +183,11 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         mMeshManagerApi.loadMeshNetwork();
         //Initialize the ble manager
         mBleMeshManager = bleMeshManager;
-        mBleMeshManager.setGattCallbacks(this);
+        mBleMeshManager.setDataObserver(this);
+        mBleMeshManager.setConnectionObserver(this);
         mHandler = new Handler(Looper.getMainLooper());
     }
 
-    void clearInstance() {
-        mBleMeshManager = null;
-    }
 
     /**
      * Returns {@link SingleLiveEvent} containing the device ready state.
@@ -258,9 +249,6 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         return mProvisionedNodes;
     }
 
-    LiveData<List<Group>> getGroup1s() {
-        return mGroups;
-    }
 
     LiveData<String> getNetworkLoadState() {
         return mNetworkImportState;
@@ -316,6 +304,7 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
      * Reset mesh network
      */
     void resetMeshNetwork() {
+        Log.d(TAG, "resetMeshNetwork");
         disconnect();
         mMeshManagerApi.resetMeshNetwork();
     }
@@ -335,12 +324,11 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         mIsAppKeyAddCompleted = false;
         mIsNetworkRetransmitSetCompleted = false;
         //clearExtendedMeshNode();
-        final LogSession logSession = Logger.newSession(context, null, device.getAddress(), device.getName());
-        mBleMeshManager.setLogger(logSession);
         initIsConnectedLiveData(connectToNetwork);
-        mConnectionState.postValue("Connecting....");
+        // mConnectionState.postValue("Connecting....");
+        mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_connecting));
         //Added a 1 second delay for connection, mostly to wait for a disconnection to complete before connecting, in case a device was previously connected.
-        Log.d("AA", "Connect issued");
+        Log.d(TAG, "Connect issued");
         mBleMeshManager.connect(device.getDevice()).retry(3, 200).enqueue();
     }
 
@@ -350,8 +338,10 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
      * @param device bluetooth device
      */
     private void connectToProxy(final ExtendedBluetoothDevice device) {
+        Log.d(TAG, "connect To Proxy " + device.getAddress());
         initIsConnectedLiveData(true);
-        mConnectionState.postValue("Connecting....");
+        // mConnectionState.postValue("Connecting....");
+        mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_connecting));
         mBleMeshManager.connect(device.getDevice()).retry(3, 200).enqueue();
     }
 
@@ -369,20 +359,19 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
     void disconnect() {
         clearProvisioningLiveData();
         mIsProvisioningComplete = false;
+        Log.d(TAG, "Disconnect issued");
         mBleMeshManager.disconnect().enqueue();
     }
 
     void clearProvisioningLiveData() {
+        Log.d(TAG, "Clear provisioning LiveData, Scan stopped!");
         stopScan();
         mHandler.removeCallbacks(mReconnectRunnable);
         mSetupProvisionedNode = false;
+        mIsFFanInitializing = false;
         mIsReconnectingFlag = false;
         mUnprovisionedMeshNodeLiveData.setValue(null);
         mProvisionedMeshNodeLiveData.setValue(null);
-    }
-
-    private void removeCallbacks() {
-        mHandler.removeCallbacksAndMessages(null);
     }
 
     public void identifyNode(final ExtendedBluetoothDevice device) {
@@ -443,21 +432,6 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         mSelectedElement.postValue(element);
     }
 
-    /**
-     * Set the selected model to be configured
-     *
-     * @param appKey mesh model
-     */
-    void setSelectedAppKey(@NonNull final ApplicationKey appKey) {
-        mSelectedAppKey.postValue(appKey);
-    }
-
-    /**
-     * Returns the selected mesh model
-     */
-    LiveData<ApplicationKey> getSelectedAppKey() {
-        return mSelectedAppKey;
-    }
 
     /**
      * Selects provisioner for editing or adding
@@ -503,30 +477,42 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
 
     @Override
     public void onDeviceConnecting(@NonNull final BluetoothDevice device) {
-        mConnectionState.postValue("Connecting....");
+        Log.d(TAG, device.getAddress() + " connecting....");
+        // mConnectionState.postValue("Connecting....");
+        mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_connecting));
     }
 
     @Override
     public void onDeviceConnected(@NonNull final BluetoothDevice device) {
+        Log.d(TAG, device.getAddress() + " connected!");
         mIsConnected.postValue(true);
-        mConnectionState.postValue("Discovering services....");
+        // mConnectionState.postValue("Discovering services....");
+        mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_discovering));
         mIsConnectedToProxy.postValue(true);
     }
 
     @Override
+    public void onDeviceFailedToConnect(@NonNull BluetoothDevice device, int reason) {
+        Log.d(TAG, "Failed to connect to " + device.getAddress() + ", Reason: " + reason);
+    }
+
+    @Override
     public void onDeviceDisconnecting(@NonNull final BluetoothDevice device) {
-        Log.v(TAG, "Disconnecting...");
+        Log.d(TAG, device.getAddress() + " disconnecting...");
         if (mIsReconnectingFlag) {
-            mConnectionState.postValue("Reconnecting...");
+            // mConnectionState.postValue("Reconnecting...");
+            mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_reconnecting));
         } else {
-            mConnectionState.postValue("Disconnecting...");
+            // mConnectionState.postValue("Disconnecting...");
+            mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_disconnecting));
         }
     }
 
     @Override
-    public void onDeviceDisconnected(@NonNull final BluetoothDevice device) {
-        Log.v(TAG, "Disconnected");
-        mConnectionState.postValue("");
+    public void onDeviceDisconnected(@NonNull BluetoothDevice device, int reason) {
+        Log.d(TAG, device.getAddress() + " disconnected: " + reason);
+        // mConnectionState.postValue("");
+        mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_disconnected));
         if (mIsReconnectingFlag) {
             mIsReconnectingFlag = false;
             mIsReconnecting.postValue(false);
@@ -537,29 +523,20 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
             mIsConnectedToProxy.postValue(false);
             if (mConnectedProxyAddress.getValue() != null) {
                 final MeshNetwork network = mMeshManagerApi.getMeshNetwork();
-                if(network != null) {
+                if (network != null) {
                     network.setProxyFilter(null);
                 }
             }
             //clearExtendedMeshNode();
         }
         mSetupProvisionedNode = false;
+        mIsFFanInitializing = false;
         mConnectedProxyAddress.postValue(null);
     }
 
     @Override
-    public void onLinkLossOccurred(@NonNull final BluetoothDevice device) {
-        Log.v(TAG, "Link loss occurred");
-        mIsConnected.postValue(false);
-    }
-
-    @Override
-    public void onServicesDiscovered(@NonNull final BluetoothDevice device, final boolean optionalServicesFound) {
-        mConnectionState.postValue("Initializing...");
-    }
-
-    @Override
     public void onDeviceReady(@NonNull final BluetoothDevice device) {
+        Log.d(TAG, device.getAddress() + " Ready");
         mOnDeviceReady.postValue(null);
 
         if (mBleMeshManager.isProvisioningComplete()) {
@@ -583,31 +560,6 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         }
     }
 
-    @Override
-    public void onBondingRequired(@NonNull final BluetoothDevice device) {
-        // Empty.
-    }
-
-    @Override
-    public void onBonded(@NonNull final BluetoothDevice device) {
-        // Empty.
-    }
-
-    @Override
-    public void onBondingFailed(@NonNull final BluetoothDevice device) {
-        // Empty.
-    }
-
-    @Override
-    public void onError(final BluetoothDevice device, @NonNull final String message, final int errorCode) {
-        Log.e(TAG, message + " (code: " + errorCode + "), device: " + device.getAddress());
-        mConnectionState.postValue(message);
-    }
-
-    @Override
-    public void onDeviceNotSupported(@NonNull final BluetoothDevice device) {
-
-    }
 
     @Override
     public void onNetworkLoaded(final MeshNetwork meshNetwork) {
@@ -671,6 +623,7 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
 
     @Override
     public void onProvisioningFailed(final UnprovisionedMeshNode meshNode, final ProvisioningState.States state, final byte[] data) {
+        Log.d(TAG, meshNode.getDeviceUuid() + " Provisioning Failed: " + state.name());
         mUnprovisionedMeshNode = meshNode;
         mUnprovisionedMeshNodeLiveData.postValue(meshNode);
         if (state == ProvisioningState.States.PROVISIONING_FAILED) {
@@ -681,7 +634,9 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
 
     @Override
     public void onProvisioningCompleted(final ProvisionedMeshNode meshNode, final ProvisioningState.States state, final byte[] data) {
+        Log.d(TAG, meshNode.getUuid() + " Provisioning Completed: " + state.name());
         mProvisionedMeshNode = meshNode;
+        mExtendedMeshNode.postValue(meshNode);
         mUnprovisionedMeshNodeLiveData.postValue(null);
         mProvisionedMeshNodeLiveData.postValue(meshNode);
         if (state == ProvisioningState.States.PROVISIONING_COMPLETE) {
@@ -694,9 +649,12 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         mIsProvisioningComplete = true;
         mProvisionedMeshNode = node;
         mIsReconnecting.postValue(true);
+        Log.d(TAG, "Disconnect issued on Provisioning Completed");
         mBleMeshManager.disconnect().enqueue();
         loadNodes();
-        mHandler.post(() -> mConnectionState.postValue("Scanning for provisioned node"));
+        // mHandler.post(() -> mConnectionState.postValue("Scanning for provisioned node"));
+
+        mHandler.post(() -> mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_scanning)));
         mHandler.postDelayed(mReconnectRunnable, 1000); //Added a slight delay to disconnect and refresh the cache
     }
 
@@ -842,11 +800,27 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
                 }
             } else if (meshMessage.getOpCode() == CONFIG_APPKEY_STATUS) {
                 final ConfigAppKeyStatus status = (ConfigAppKeyStatus) meshMessage;
+                mIsFFanInitializing = false;
                 if (mSetupProvisionedNode) {
                     mSetupProvisionedNode = false;
                     if (status.isSuccessful()) {
                         mIsAppKeyAddCompleted = true;
                         mProvisionedMeshNodeLiveData.postValue(node);
+
+                        mIsFFanInitializing = true;
+
+                        for (Element element : node.getElements().values()) {
+                            final int elementAddress = element.getElementAddress();
+                            for (MeshModel model : element.getMeshModels().values()) {
+                                final int modelId = model.getModelId();
+                                if (modelId == 0x05D60001) {
+                                    final ConfigModelAppBind bind = new ConfigModelAppBind(elementAddress, modelId, 0);
+                                    mMeshManagerApi.createMeshPdu(node.getUnicastAddress(), bind);
+                                    mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.SENDING_CONFIG_MODEL_APP_STATUS);
+                                }
+                            }
+                        }
+
                     }
                     mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.APP_KEY_STATUS_RECEIVED);
                 } else {
@@ -861,6 +835,27 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
                         mSelectedElement.postValue(element);
                         final MeshModel model = element.getMeshModels().get(status.getModelIdentifier());
                         mSelectedModel.postValue(model);
+
+                        if (mIsFFanInitializing && status.getModelIdentifier() == 0x05D60001) {
+                            mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.CONFIG_MODEL_APP_STATUS_RECEIVED);
+                            if (status.isSuccessful()) {
+                                MeshMessage publication = new ConfigModelPublicationSet(element.getElementAddress(),
+                                        0xc000,
+                                        0,
+                                        false,
+                                        255,
+                                        0,
+                                        0,
+                                        1,
+                                        1,
+                                        0x05D60001);
+
+                                mMeshManagerApi.createMeshPdu(node.getUnicastAddress(), publication);
+                                mHandler.postDelayed(() -> mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.SENDING_CONFIG_MODEL_PUBLICATION_STATUS), 100);
+                            } else {
+                                mHandler.postDelayed(() -> mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.CONFIG_FFAN_MODEL_FAILED_RECEIVED), 100);
+                            }
+                        }
                     }
                 }
             } else if (meshMessage.getOpCode() == CONFIG_MODEL_PUBLICATION_STATUS) {
@@ -871,6 +866,23 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
                         mSelectedElement.postValue(element);
                         final MeshModel model = element.getMeshModels().get(status.getModelIdentifier());
                         mSelectedModel.postValue(model);
+
+                        if (mIsFFanInitializing && status.getModelIdentifier() == 0x05D60001) {
+                            if (status.isSuccessful()) {
+                                mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.CONFIG_MODEL_PUBLICATION_STATUS_RECEIVED);
+                                String nodeType = node.getUuid().substring(16, 18);
+                                if (nodeType.equals("03")) {
+                                    mIsFFanInitializing = false;
+                                    mHandler.postDelayed(() -> mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.CONFIG_FFAN_MODEL_SUCCESS_RECEIVED), 100);
+                                } else {
+                                    MeshMessage subscription = new ConfigModelSubscriptionAdd(element.getElementAddress(), 0xc000, 0x05D60001);
+                                    mMeshManagerApi.createMeshPdu(node.getUnicastAddress(), subscription);
+                                    mHandler.postDelayed(() -> mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.SENDING_CONFIG_MODEL_SUBSCRIPTION_STATUS), 100);
+                                }
+                            } else {
+                                mHandler.postDelayed(() -> mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.CONFIG_FFAN_MODEL_FAILED_RECEIVED), 100);
+                            }
+                        }
                     }
                 }
 
@@ -882,7 +894,16 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
                         mSelectedElement.postValue(element);
                         final MeshModel model = element.getMeshModels().get(status.getModelIdentifier());
                         mSelectedModel.postValue(model);
+                        if (mIsFFanInitializing && status.getModelIdentifier() == 0x05D60001) {
+                            mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.CONFIG_MODEL_SUBSCRIPTION_STATUS_RECEIVED);
+                            if (status.isSuccessful()) {
+                                mHandler.postDelayed(() -> mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.CONFIG_FFAN_MODEL_SUCCESS_RECEIVED), 100);
+                            } else {
+                                mHandler.postDelayed(() -> mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.CONFIG_FFAN_MODEL_FAILED_RECEIVED), 100);
+                            }
+                        }
                     }
+                    mIsFFanInitializing = false;
                 }
 
             } else if (meshMessage.getOpCode() == CONFIG_NODE_RESET_STATUS) {
@@ -969,7 +990,7 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         }
 
         //Refresh mesh network live data
-        if(mMeshManagerApi.getMeshNetwork() != null) {
+        if (mMeshManagerApi.getMeshNetwork() != null) {
             mMeshNetworkLiveData.refresh(mMeshManagerApi.getMeshNetwork());
         }
     }
@@ -1042,7 +1063,7 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
 
         final BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
         scanner.startScan(filters, settings, scanCallback);
-        Log.v(TAG, "Scan started");
+        Log.d(TAG, "Scan started");
         mHandler.postDelayed(mScannerTimeout, 20000);
     }
 
@@ -1068,8 +1089,10 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
                     if (mMeshManagerApi.isAdvertisedWithNodeIdentity(serviceData)) {
                         final ProvisionedMeshNode node = mProvisionedMeshNode;
                         if (mMeshManagerApi.nodeIdentityMatches(node, serviceData)) {
+                            Log.d(TAG, "onScanResult, Scan stopped!");
                             stopScan();
-                            mConnectionState.postValue("Provisioned node found");
+                            // mConnectionState.postValue("Provisioned node found");
+                            mConnectionState.postValue(mMeshManagerApi.getContext().getString(R.string.state_found));
                             onProvisionedDeviceFound(node, new ExtendedBluetoothDevice(result));
                         }
                     }
@@ -1084,11 +1107,12 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
 
         @Override
         public void onScanFailed(final int errorCode) {
-
+            Log.d(TAG, "Scan Failed: " + errorCode);
         }
     };
 
     private void onProvisionedDeviceFound(final ProvisionedMeshNode node, final ExtendedBluetoothDevice device) {
+        Log.d(TAG, "onProvisionedDeviceFound: " + node.getUuid() + "[" + device.getAddress() + "]");
         mSetupProvisionedNode = true;
         mProvisionedMeshNode = node;
         mIsReconnectingFlag = true;

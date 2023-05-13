@@ -22,6 +22,8 @@
 
 package no.nordicsemi.android.nrfmesh.viewmodels;
 
+import android.util.Log;
+
 import java.io.OutputStream;
 
 import javax.inject.Inject;
@@ -54,6 +56,7 @@ public class SharedViewModel extends BaseViewModel implements NetworkExportUtils
     @Override
     protected void onCleared() {
         super.onCleared();
+        Log.d("NrfMeshRepository", "ShareViewModel.onCleared");
         mNrfMeshRepository.disconnect();
         mScannerRepository.unregisterBroadcastReceivers();
     }

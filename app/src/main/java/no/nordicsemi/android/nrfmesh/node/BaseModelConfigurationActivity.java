@@ -415,8 +415,8 @@ public abstract class BaseModelConfigurationActivity extends BaseActivity implem
             if (element != null) {
                 final MeshModel model = mViewModel.getSelectedModel().getValue();
                 if (model != null) {
-                    final ConfigModelAppBind configModelAppUnbind = new ConfigModelAppBind(element.getElementAddress(), model.getModelId(), appKeyIndex);
-                    sendAcknowledgedMessage(meshNode.getUnicastAddress(), configModelAppUnbind);
+                    final ConfigModelAppBind configModelAppBind = new ConfigModelAppBind(element.getElementAddress(), model.getModelId(), appKeyIndex);
+                    sendAcknowledgedMessage(meshNode.getUnicastAddress(), configModelAppBind);
                 }
             }
         }
@@ -597,7 +597,7 @@ public abstract class BaseModelConfigurationActivity extends BaseActivity implem
         } catch (IllegalArgumentException ex) {
             hideProgressBar();
             final DialogFragmentError message = DialogFragmentError.
-                    newInstance(getString(R.string.title_error), ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage());
+                    newInstance(getString(R.string.title_error), ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage());
             message.show(getSupportFragmentManager(), null);
         }
     }
@@ -622,7 +622,7 @@ public abstract class BaseModelConfigurationActivity extends BaseActivity implem
         } catch (IllegalArgumentException ex) {
             hideProgressBar();
             DialogFragmentError
-                    .newInstance(getString(R.string.title_error), ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage())
+                    .newInstance(getString(R.string.title_error), ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage())
                     .show(getSupportFragmentManager(), null);
         }
     }
@@ -635,7 +635,7 @@ public abstract class BaseModelConfigurationActivity extends BaseActivity implem
             mViewModel.getMeshManagerApi().createMeshPdu(address, meshMessage);
         } catch (IllegalArgumentException ex) {
             DialogFragmentError
-                    .newInstance(getString(R.string.title_error), ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage())
+                    .newInstance(getString(R.string.title_error), ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage())
                     .show(getSupportFragmentManager(), null);
         }
     }

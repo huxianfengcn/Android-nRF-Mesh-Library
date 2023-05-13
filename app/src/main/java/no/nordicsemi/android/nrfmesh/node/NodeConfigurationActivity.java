@@ -27,6 +27,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -392,7 +393,7 @@ public class NodeConfigurationActivity extends BaseActivity implements
             hideProgressBar();
             final DialogFragmentError message = DialogFragmentError.
                     newInstance(getString(R.string.title_error),
-                            ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage());
+                            ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage());
             message.show(getSupportFragmentManager(), null);
         }
     }

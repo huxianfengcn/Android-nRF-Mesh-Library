@@ -22,15 +22,13 @@
 
 package no.nordicsemi.android.nrfmesh;
 
+import static no.nordicsemi.android.nrfmesh.utils.Utils.RESULT_KEY;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
-
-import com.google.android.material.snackbar.Snackbar;
-
-import java.util.Locale;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -41,6 +39,11 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.Locale;
+
 import dagger.hilt.android.AndroidEntryPoint;
 import no.nordicsemi.android.mesh.ApplicationKey;
 import no.nordicsemi.android.mesh.MeshNetwork;
@@ -48,6 +51,7 @@ import no.nordicsemi.android.mesh.Provisioner;
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningCapabilities;
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningFailedState;
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode;
+import no.nordicsemi.android.mesh.transport.MeshMessage;
 import no.nordicsemi.android.mesh.utils.AuthenticationOOBMethods;
 import no.nordicsemi.android.mesh.utils.InputOOBAction;
 import no.nordicsemi.android.mesh.utils.MeshParserUtils;
@@ -67,8 +71,6 @@ import no.nordicsemi.android.nrfmesh.utils.ProvisionerStates;
 import no.nordicsemi.android.nrfmesh.utils.Utils;
 import no.nordicsemi.android.nrfmesh.viewmodels.ProvisionerProgress;
 import no.nordicsemi.android.nrfmesh.viewmodels.ProvisioningViewModel;
-
-import static no.nordicsemi.android.nrfmesh.utils.Utils.RESULT_KEY;
 
 @AndroidEntryPoint
 public class ProvisioningActivity extends AppCompatActivity implements
@@ -220,7 +222,7 @@ public class ProvisioningActivity extends AppCompatActivity implements
                             updateCapabilitiesUi(capabilities);
                         } catch (IllegalArgumentException ex) {
                             binding.actionProvisionDevice.setEnabled(false);
-                            mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
+                            mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
                         }
                     }
                 }
@@ -359,14 +361,25 @@ public class ProvisioningActivity extends AppCompatActivity implements
                                 fragment.dismiss();
                             break;
                         case APP_KEY_STATUS_RECEIVED:
-                            if (getSupportFragmentManager().findFragmentByTag(DIALOG_FRAGMENT_CONFIGURATION_STATUS) == null) {
-                                DialogFragmentConfigurationComplete fragmentConfigComplete = DialogFragmentConfigurationComplete.
-                                        newInstance(getString(R.string.title_configuration_compete), getString(R.string.configuration_complete_summary));
-                                fragmentConfigComplete.show(getSupportFragmentManager(), DIALOG_FRAGMENT_CONFIGURATION_STATUS);
-                            }
+                            Snackbar.make(binding.coordinator, getString(R.string.configuration_complete_summary), Snackbar.LENGTH_LONG).show();
                             break;
                         case PROVISIONER_UNASSIGNED:
                             setResultIntent();
+                            break;
+                        case CONFIG_FFAN_MODEL_FAILED_RECEIVED:
+                            if (getSupportFragmentManager().findFragmentByTag(DIALOG_FRAGMENT_CONFIGURATION_STATUS) == null) {
+                                DialogFragmentConfigurationComplete fragmentConfigComplete = DialogFragmentConfigurationComplete.
+                                        newInstance(getString(R.string.title_configuration_compete), getString(R.string.config_ffan_model_failed_received));
+                                fragmentConfigComplete.show(getSupportFragmentManager(), DIALOG_FRAGMENT_CONFIGURATION_STATUS);
+                            }
+                            break;
+
+                        case CONFIG_FFAN_MODEL_SUCCESS_RECEIVED:
+                            if (getSupportFragmentManager().findFragmentByTag(DIALOG_FRAGMENT_CONFIGURATION_STATUS) == null) {
+                                DialogFragmentConfigurationComplete fragmentConfigComplete = DialogFragmentConfigurationComplete.
+                                        newInstance(getString(R.string.title_configuration_compete), getString(R.string.config_ffan_model_success_received));
+                                fragmentConfigComplete.show(getSupportFragmentManager(), DIALOG_FRAGMENT_CONFIGURATION_STATUS);
+                            }
                             break;
                         default:
                             break;
@@ -382,6 +395,12 @@ public class ProvisioningActivity extends AppCompatActivity implements
     @Override
     public void onConfigurationCompleted() {
         setResultIntent();
+    }
+
+    private void sendQueuedMessage(final int address) {
+        final MeshMessage message = mViewModel.getMessageQueue().peek();
+        if (message != null)
+            mViewModel.getMeshManagerApi().createMeshPdu(address, message);
     }
 
     private void setResultIntent() {
@@ -453,7 +472,7 @@ public class ProvisioningActivity extends AppCompatActivity implements
                 binding.provisioningProgressBar.setVisibility(View.VISIBLE);
                 mViewModel.getMeshManagerApi().startProvisioning(node);
             } catch (IllegalArgumentException ex) {
-                mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
+                mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
             }
         }
     }
@@ -468,7 +487,7 @@ public class ProvisioningActivity extends AppCompatActivity implements
                 binding.provisioningProgressBar.setVisibility(View.VISIBLE);
                 mViewModel.getMeshManagerApi().startProvisioningWithStaticOOB(node);
             } catch (IllegalArgumentException ex) {
-                mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
+                mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
             }
         }
     }
@@ -483,7 +502,7 @@ public class ProvisioningActivity extends AppCompatActivity implements
                 binding.provisioningProgressBar.setVisibility(View.VISIBLE);
                 mViewModel.getMeshManagerApi().startProvisioningWithOutputOOB(node, action);
             } catch (IllegalArgumentException ex) {
-                mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
+                mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
             }
         }
     }
@@ -498,7 +517,7 @@ public class ProvisioningActivity extends AppCompatActivity implements
                 binding.provisioningProgressBar.setVisibility(View.VISIBLE);
                 mViewModel.getMeshManagerApi().startProvisioningWithInputOOB(node, action);
             } catch (IllegalArgumentException ex) {
-                mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
+                mViewModel.displaySnackBar(this, binding.coordinator, ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
             }
         }
     }

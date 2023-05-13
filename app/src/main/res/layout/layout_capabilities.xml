@@ -20,7 +20,7 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:logo="@drawable/ic_capabilities"
-            app:title="Capabilities"
+            app:title="@string/title_capabilities"
             app:titleMarginStart="@dimen/toolbar_title_margin"
             app:titleTextAppearance="@style/Toolbar.TitleText"/>
 

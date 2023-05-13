@@ -293,7 +293,7 @@ public class AddProvisionerActivity extends AppCompatActivity implements
             } catch (IllegalArgumentException ex) {
                 final DialogFragmentError fragment = DialogFragmentError.
                         newInstance(getString(R.string.title_error), ex.getMessage() == null ?
-                                getString(R.string.unknwon_error) : ex.getMessage());
+                                getString(R.string.unknown_error) : ex.getMessage());
                 fragment.show(getSupportFragmentManager(), null);
             }
         }

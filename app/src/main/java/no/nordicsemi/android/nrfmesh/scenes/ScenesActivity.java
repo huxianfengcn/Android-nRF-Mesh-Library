@@ -92,7 +92,7 @@ public class ScenesActivity extends AppCompatActivity implements
                         final Scene scene = createScene();
                         DialogFragmentCreateScene.newInstance(scene).show(getSupportFragmentManager(), null);
                     } catch (IllegalArgumentException exception) {
-                        displaySnackBar(exception.getMessage() == null ? getString(R.string.unknwon_error) : exception.getMessage(), null);
+                        displaySnackBar(exception.getMessage() == null ? getString(R.string.unknown_error) : exception.getMessage(), null);
                     }
                 }
         );
@@ -153,7 +153,7 @@ public class ScenesActivity extends AppCompatActivity implements
             }
         } catch (Exception ex) {
             mAdapter.update(mViewModel.getNetworkLiveData().getMeshNetwork().getScenes());
-            mViewModel.displaySnackBar(this, binding.container, ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
+            mViewModel.displaySnackBar(this, binding.container, ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
         }
     }
 

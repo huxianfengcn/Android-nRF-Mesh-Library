@@ -27,12 +27,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import no.nordicsemi.android.nrfmesh.R;
 import no.nordicsemi.android.nrfmesh.databinding.ProgressItemBinding;
 import no.nordicsemi.android.nrfmesh.viewmodels.ProvisionerProgress;
 import no.nordicsemi.android.nrfmesh.viewmodels.ProvisioningStatusLiveData;
@@ -54,8 +56,9 @@ public class ProvisioningProgressAdapter extends RecyclerView.Adapter<Provisioni
     public void onBindViewHolder(@NonNull final ViewHolder holder, final int position) {
         final ProvisionerProgress provisioningProgress = mProgress.get(position);
         if (provisioningProgress != null) {
-            holder.image.setImageDrawable(ContextCompat.getDrawable(holder.itemView.getContext(), provisioningProgress.getResId()));
-            holder.progress.setText(provisioningProgress.getMessage());
+            int iconId = provisioningProgress.isSend() ? R.drawable.ic_arrow_forward : R.drawable.ic_arrow_back;
+            holder.image.setImageDrawable(ContextCompat.getDrawable(holder.itemView.getContext(), iconId));
+            holder.progress.setText(provisioningProgress.getMsgResId());
         }
     }
 

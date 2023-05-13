@@ -54,6 +54,12 @@
     <string name="unprovisioned_node_guide_location_action">Enable</string>
 
     <string name="state_connecting">Connecting…</string>
+    <string name="state_discovering">Discovering services…</string>
+    <string name="state_reconnecting">Reconnecting…</string>
+    <string name="state_disconnecting">Disconnecting…</string>
+    <string name="state_scanning">Scanning for provisioned node…</string>
+    <string name="state_found">Provisioned node found.</string>
+    <string name="state_disconnected">Disconnected.</string>
 
     <string name="yes">YES</string>
     <string name="no">NO</string>
@@ -88,8 +94,6 @@
     <string name="static_oob_information_unavailable">Static OOB information unavailable</string>
     <string name="output_oob_actions_unavailable">Output OOB actions unavailable</string>
     <string name="input_oob_actions_unavailable">Input OOB actions unavailable</string>
-
-    <string name="sending_prov_invite">Sending provisioning invite…</string>
 
     <string name="provision_action">Provision</string>
     <string name="identify_action">Identify</string>
@@ -331,8 +335,8 @@
     <string name="action_relay_retransmit_set">SET RELAY</string>
 
     <string name="title_proxy_state_settings">Proxy State</string>
-    <string name="action_proxy_state_set_on">ON</string>
-    <string name="action_proxy_state_set_off">OFF</string>
+    <string name="action_proxy_state_set_on">Turn On</string>
+    <string name="action_proxy_state_set_off">Turn Off</string>
     <string name="action_proxy_state_get">READ STATE</string>
     <string name="proxy_set_on_rationale">Turning on the proxy feature will set this node to a connectable state and enable the proxy server.</string>
     <string name="proxy_set_on_rationale_summary">Turning on the proxy feature will set this node to a connectable state and enable the proxy server.
@@ -680,7 +684,7 @@
         If the Mesh Proxy Service is exposed, the node can be configured to advertise with Node Identity on a subnet.</string>
     <string name="title_sensor_information">Sensor Information</string>
     <string name="error_empty_scene_name">Error empty scene name</string>
-    <string name="unknwon_error">Unknown error</string>
+    <string name="unknown_error">Unknown error</string>
     <string name="error_allocate_group_range">Provisioner must have an allocated group range!</string>
 
 
@@ -689,4 +693,43 @@
     <string name="message_public_key">Enter the 128-character hexadecimal Public Key of the device.</string>
     <string name="skip">skip</string>
     <string name="skip_oob_public_key_summary">Skipping this process will mark the provisioned node and any Network Key associated with this node as insecure.</string>
+
+    <string name="title_provisioning_data">Provisioning Data</string>
+    <string name="title_capabilities">Capabilities</string>
+
+    <string name="provisioning_invite">Sending provisioning invite…</string>
+    <string name="provisioning_capabilities">Provisioning capabilities received.</string>
+    <string name="provisioning_start">Sending provisioning start…</string>
+    <string name="provisioning_public_key_sent">Sending provisioning public key…</string>
+    <string name="provisioning_public_key_received">Provisioning public key received.</string>
+    <string name="provisioning_waiting_oob">Waiting for user authentication input…</string>
+    <string name="provisioning_authentication_input_entered">OOB authentication entered.</string>
+    <string name="provisioning_input_complete">Provisioning input complete received.</string>
+    <string name="provisioning_confirmation_sent">Sending provisioning confirmation…</string>
+    <string name="provisioning_confirmation_received">Provisioning confirmation received.</string>
+    <string name="provisioning_random_sent">Sending provisioning random…</string>
+    <string name="provisioning_random_received">Provisioning random received.</string>
+    <string name="provisioning_data_sent">Sending provisioning data…</string>
+    <string name="provisioning_complete">Provisioning complete received.</string>
+    <string name="provisioning_failed">Provisioning failed received.</string>
+    <string name="composition_data_get_sent">Sending composition data get…</string>
+    <string name="composition_data_status_received">Composition data status received.</string>
+    <string name="sending_default_ttl_get">Sending default TLL get…</string>
+    <string name="default_ttl_status_received">Default TTL status received.</string>
+    <string name="sending_app_key_add">Sending app key addSending app key add…</string>
+    <string name="app_key_status_received">App key status received.</string>
+    <string name="sending_network_transmit_set">Sending network transmit set…</string>
+    <string name="network_transmit_status_received">Network transmit status received.</string>
+    <string name="sending_block_acknowledgement">Sending block acknowledgements…</string>
+    <string name="block_acknowledgement_received">block acknowledgements received.</string>
+    <string name="provisioner_unassigned">Provisioner unassigned.</string>
+
+    <string name="sending_config_model_app_status">Sending config ffan_model bind appkey…</string>
+    <string name="config_model_app_status_received">Config ffan_model bind appkey.</string>
+    <string name="sending_config_model_publication_status">Sending config model publication…</string>
+    <string name="config_model_publication_status_received">Config model publication received.</string>
+    <string name="sending_config_model_subscription_status">Sending config model subscription…</string>
+    <string name="config_model_subscription_status_received">Config model subscription received.</string>
+    <string name="config_ffan_model_success_received">config ffan model success.</string>
+    <string name="config_ffan_model_failed_received">config ffan model failed.</string>
 </resources>

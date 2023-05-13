@@ -3,6 +3,7 @@ package no.nordicsemi.android.nrfmesh.viewmodels;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -105,7 +106,7 @@ public abstract class BaseViewModel extends ViewModel {
     /**
      * Start activity based on the type of the model
      *
-     * <p> This way we can seperate the ui logic for different activities</p>
+     * <p> This way we can separate the ui logic for different activities</p>
      *
      * @param context Activity context
      * @param model   {@link MeshModel}
@@ -149,6 +150,7 @@ public abstract class BaseViewModel extends ViewModel {
      * Disconnect from peripheral
      */
     public final void disconnect() {
+        Log.d("NrfMeshRepository", "BaseViewModel.disconnect: Disconnect from peripheral");
         mNrfMeshRepository.disconnect();
     }
 

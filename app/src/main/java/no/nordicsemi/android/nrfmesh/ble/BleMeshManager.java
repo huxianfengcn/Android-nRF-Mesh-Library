@@ -34,11 +34,12 @@ import javax.inject.Singleton;
 
 import androidx.annotation.NonNull;
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.callback.DataReceivedCallback;
 import no.nordicsemi.android.ble.callback.DataSentCallback;
 
 @Singleton
-public class BleMeshManager extends LoggableBleManager<BleMeshManagerCallbacks> {
+public class BleMeshManager extends BleManager {
     private static final int MTU_SIZE_DEFAULT = 23;
     private static final int MTU_SIZE_MAX = 517;
 
@@ -79,6 +80,12 @@ public class BleMeshManager extends LoggableBleManager<BleMeshManagerCallbacks> 
     private boolean mIsDeviceReady;
     private boolean mNodeReset;
 
+    private MeshDataObserver dataObserver;
+
+    public void setDataObserver(MeshDataObserver observer) {
+        dataObserver = observer;
+    }
+
     /**
      * BluetoothGatt callbacks for connection/disconnection, service discovery, receiving notifications, etc.
      */
@@ -117,8 +124,14 @@ public class BleMeshManager extends LoggableBleManager<BleMeshManagerCallbacks> 
             requestMtu(MTU_SIZE_MAX).enqueue();
 
             // This callback will be called each time a notification is received.
+            /*
             final DataReceivedCallback onDataReceived = (device, data) ->
                     mCallbacks.onDataReceived(device, getMaximumPacketSize(), data.getValue());
+            */
+            final DataReceivedCallback onDataReceived = (device, data) -> {
+                if (dataObserver != null)
+                    dataObserver.onDataReceived(device, getMaximumPacketSize(), data.getValue());
+            };
 
             // Set the notification callback and enable notification on Data In characteristic.
             final BluetoothGattCharacteristic characteristic = isProvisioningComplete ?
@@ -198,8 +211,15 @@ public class BleMeshManager extends LoggableBleManager<BleMeshManagerCallbacks> 
             return;
 
         // This callback will be called each time the data were sent.
+        /*
         final DataSentCallback callback = (device, data) ->
                 mCallbacks.onDataSent(device, getMaximumPacketSize(), data.getValue());
+        */
+
+        final DataSentCallback callback = (device, data) -> {
+            if (dataObserver != null)
+                dataObserver.onDataSent(device, getMaximumPacketSize(), data.getValue());
+        };
 
         // Write the right characteristic.
         final BluetoothGattCharacteristic characteristic = isProvisioningComplete ?

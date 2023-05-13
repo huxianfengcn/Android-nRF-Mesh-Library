@@ -25,33 +25,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_centerHorizontal="true"
-    android:orientation="vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/activity_horizontal_margin"
+    android:paddingTop="2dp"
+    android:paddingEnd="@dimen/activity_horizontal_margin"
+    android:paddingBottom="2dp"
     tools:ignore="ContentDescription">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        app:srcCompat="@drawable/ic_arrow_forward" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:paddingStart="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/item_padding_top"
-        android:paddingEnd="@dimen/activity_horizontal_margin"
-        android:paddingBottom="@dimen/item_padding_bottom">
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+        tools:ignore="RtlSymmetry"
+        tools:text="@string/provisioning_invite" />
 
-        <ImageView
-            android:id="@+id/image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/ic_arrow_forward" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingStart="@dimen/activity_horizontal_margin"
-            android:text="@string/sending_prov_invite"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-            tools:ignore="RtlSymmetry" />
-
-    </LinearLayout>
 </LinearLayout>

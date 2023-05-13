@@ -44,6 +44,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
+
 import dagger.hilt.android.AndroidEntryPoint;
 import no.nordicsemi.android.nrfmesh.ProvisioningActivity;
 import no.nordicsemi.android.nrfmesh.R;
@@ -149,9 +150,9 @@ public class ScannerActivity extends AppCompatActivity implements
 
     @Override
     public void onItemClick(final ExtendedBluetoothDevice device) {
-        //We must disconnect from any nodes that we are connected to before we start scanning.
-        if (mViewModel.getBleMeshManager().isConnected())
-            mViewModel.disconnect();
+        // We must disconnect from any nodes that we are connected to before we start scanning.
+        // if (mViewModel.getBleMeshManager().isConnected())
+        mViewModel.disconnect();
         final Intent intent;
         if (mScanWithProxyService) {
             intent = new Intent(this, ProvisioningActivity.class);
@@ -258,7 +259,7 @@ public class ScannerActivity extends AppCompatActivity implements
             binding.stateScanning.setVisibility(View.INVISIBLE);
             binding.noDevices.getRoot().setVisibility(View.GONE);
 
-            if(Utils.isSorAbove()){
+            if (Utils.isSorAbove()) {
                 final boolean deniedForever = Utils.isBluetoothPermissionDeniedForever(this);
                 binding.noBluetoothPermissions.actionGrantBluetoothPermission.setVisibility(deniedForever ? View.GONE : View.VISIBLE);
                 binding.noLocationPermission.actionPermissionSettings.setVisibility(deniedForever ? View.VISIBLE : View.GONE);

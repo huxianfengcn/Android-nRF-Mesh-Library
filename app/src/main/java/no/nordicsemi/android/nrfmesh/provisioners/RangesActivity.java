@@ -222,7 +222,7 @@ public class RangesActivity extends AppCompatActivity implements
                 updateUi();
             } catch (Exception ex) {
                 mViewModel.displaySnackBar(this, binding.container,
-                        ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
+                        ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
             }
         }
     }

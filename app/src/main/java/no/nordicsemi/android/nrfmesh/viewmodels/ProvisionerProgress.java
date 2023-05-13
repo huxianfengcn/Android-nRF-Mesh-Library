@@ -25,23 +25,22 @@ package no.nordicsemi.android.nrfmesh.viewmodels;
 import no.nordicsemi.android.nrfmesh.utils.ProvisionerStates;
 
 public class ProvisionerProgress {
-
     private final ProvisionerStates state;
     private int statusReceived;
-    private final String message;
-    private final int resId;
+    private boolean send = false;
+    private final int msgResId;
 
-    ProvisionerProgress(final ProvisionerStates state, final String message, final int resId) {
+    ProvisionerProgress(final ProvisionerStates state, final int msgResId, boolean send) {
         this.state = state;
-        this.message = message;
-        this.resId = resId;
+        this.send = send;
+        this.msgResId = msgResId;
     }
 
-    ProvisionerProgress(final ProvisionerStates state, final int status, final String message, final int resId) {
+    ProvisionerProgress(final ProvisionerStates state, final int msgResId, final boolean send, final int status) {
         this.state = state;
         this.statusReceived = status;
-        this.message = message;
-        this.resId = resId;
+        this.send = send;
+        this.msgResId = msgResId;
     }
 
     public ProvisionerStates getState() {
@@ -52,12 +51,12 @@ public class ProvisionerProgress {
         return statusReceived;
     }
 
-    public String getMessage() {
-        return message;
+    public boolean isSend() {
+        return send;
     }
 
-    public int getResId() {
-        return resId;
+    public int getMsgResId() {
+        return msgResId;
     }
 
 }

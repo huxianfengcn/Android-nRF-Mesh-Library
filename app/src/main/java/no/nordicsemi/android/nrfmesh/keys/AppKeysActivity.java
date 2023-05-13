@@ -197,7 +197,7 @@ public class AppKeysActivity extends AppCompatActivity implements
             }
         } catch (Exception ex) {
             mAdapter.notifyItemChanged(viewHolder.getAbsoluteAdapterPosition());
-            mViewModel.displaySnackBar(this, binding.container, ex.getMessage() == null ? getString(R.string.unknwon_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
+            mViewModel.displaySnackBar(this, binding.container, ex.getMessage() == null ? getString(R.string.unknown_error) : ex.getMessage(), Snackbar.LENGTH_LONG);
         }
     }
 

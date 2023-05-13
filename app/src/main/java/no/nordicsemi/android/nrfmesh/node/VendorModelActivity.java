@@ -10,6 +10,8 @@ import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.nio.charset.StandardCharsets;
+
 import dagger.hilt.android.AndroidEntryPoint;
 import no.nordicsemi.android.mesh.ApplicationKey;
 import no.nordicsemi.android.mesh.models.VendorModel;
@@ -20,6 +22,7 @@ import no.nordicsemi.android.mesh.transport.MeshMessage;
 import no.nordicsemi.android.mesh.transport.MeshModel;
 import no.nordicsemi.android.mesh.transport.VendorModelMessageAcked;
 import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus;
+import no.nordicsemi.android.mesh.utils.ArrayUtils;
 import no.nordicsemi.android.mesh.utils.MeshParserUtils;
 import no.nordicsemi.android.nrfmesh.R;
 import no.nordicsemi.android.nrfmesh.databinding.LayoutVendorModelControlsBinding;
@@ -59,7 +62,7 @@ public class VendorModelActivity extends ModelConfigurationActivity {
                 }
             });
 
-            layoutVendorModelControlsBinding.parameters.setKeyListener(hexKeyListener);
+            // layoutVendorModelControlsBinding.parameters.setKeyListener(hexKeyListener);
             layoutVendorModelControlsBinding.parameters.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(final CharSequence s, final int start, final int count, final int after) {
@@ -85,10 +88,10 @@ public class VendorModelActivity extends ModelConfigurationActivity {
 
                 if (!validateOpcode(opCode, layoutVendorModelControlsBinding.opCodeLayout))
                     return;
-
+/*
                 if (!validateParameters(parameters, layoutVendorModelControlsBinding.parametersLayout))
                     return;
-
+*/
                 if (model.getBoundAppKeyIndexes().isEmpty()) {
                     Toast.makeText(this, R.string.no_app_keys_bound, Toast.LENGTH_LONG).show();
                     return;
@@ -98,7 +101,8 @@ public class VendorModelActivity extends ModelConfigurationActivity {
                 if (TextUtils.isEmpty(parameters) && parameters.length() == 0) {
                     params = null;
                 } else {
-                    params = MeshParserUtils.toByteArray(parameters);
+                    // params = MeshParserUtils.toByteArray(parameters);
+                    params = ArrayUtils.insert(0,parameters.getBytes(StandardCharsets.UTF_8), (byte) 1);
                 }
 
                 sendVendorModelMessage(Integer.parseInt(opCode, 16), params, layoutVendorModelControlsBinding.chkAcknowledged.isChecked());
@@ -187,6 +191,7 @@ public class VendorModelActivity extends ModelConfigurationActivity {
      * @param parametersLayout parameter view
      * @return true if success or false otherwise
      */
+    /*
     private boolean validateParameters(final String parameters, final TextInputLayout parametersLayout) {
         try {
             if (TextUtils.isEmpty(parameters) && parameters.length() == 0) {
@@ -213,6 +218,7 @@ public class VendorModelActivity extends ModelConfigurationActivity {
         }
         return true;
     }
+     */
 
     /**
      * Send vendor model acknowledged message

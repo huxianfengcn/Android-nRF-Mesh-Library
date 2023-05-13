@@ -176,6 +176,9 @@ public class MeshManagerApi implements MeshMngrApi {
                 mGroupsDao, mScenesDao, networkLoadCallbacks);
     }
 
+    public Context getContext() {
+        return mContext;
+    }
     @Override
     public MeshNetwork getMeshNetwork() {
         return mMeshNetwork;
@@ -838,6 +841,8 @@ public class MeshManagerApi implements MeshMngrApi {
             network.unicastAddress = 1;
         }
         network.lastSelected = true;
+        Group defaultGroup = network.createGroup(provisioner, "非凡消防");
+        network.addGroup(defaultGroup);
         network.sequenceNumbers.clear(); //Clear the sequence numbers first
         network.loadSequenceNumbers();
         ivUpdateTestModeActive = false;
